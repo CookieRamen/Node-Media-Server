@@ -5,6 +5,11 @@ const conf = require('./config');
 
 const config = {
   logType: conf.debug ? 4 : 2,
+  auth: {
+    api : true,
+    api_user: conf.api_user,
+    api_pass: conf.api_pass
+  },
   rtmp: {
     port: 1935,
     chunk_size: 100000,
