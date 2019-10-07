@@ -43,8 +43,9 @@ class NodeTransSession extends EventEmitter {
     }
     if (this.conf.hls) {
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
+      ouPath += this.conf.rec ? `/${random}` : '';
       let hlsFileName = 'index.m3u8';
-      let mapHls = `[${this.conf.hlsFlags}:hls_segment_filename=\'${ouPath}/misskeylive_${random}_%d.ts\']${ouPath}/${hlsFileName}|`;
+      let mapHls = `[${this.conf.hlsFlags}:hls_segment_filename=\'${ouPath}/misskeylive_archive_%d.ts\']${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
     }
@@ -80,6 +81,7 @@ class NodeTransSession extends EventEmitter {
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       this.emit('end');
+      if (this.conf.rec) return;
       fs.readdir(ouPath, function (err, files) {
         if (!err) {
           files.forEach((filename) => {

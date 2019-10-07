@@ -59,7 +59,7 @@ class NodeTransServer {
     while (i--) {
       let conf = this.config.trans.tasks[i];
       conf.ffmpeg = this.config.trans.ffmpeg;
-      conf.mediaroot = this.config.http.mediaroot;
+      conf.mediaroot = conf.rec ? './rec' : this.config.http.mediaroot;
       conf.rtmpPort = this.config.rtmp.port;
       conf.streamPath = streamPath;
       conf.streamApp = app;
