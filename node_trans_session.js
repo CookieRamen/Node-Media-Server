@@ -10,6 +10,12 @@ const { spawn } = require('child_process');
 const dateFormat = require('dateformat');
 const mkdirp = require('mkdirp');
 const fs = require('fs');
+const config = require('./knzklive/config');
+const aws = require('aws-sdk');
+aws.config.accessKeyId = config.s3.accessKey;
+aws.config.secretAccessKey = config.s3.secret;
+const s3 = new aws.S3({endpoint: config.s3.endpoint});
+const axios = require('axios');
 
 class NodeTransSession extends EventEmitter {
   constructor(conf) {
@@ -44,7 +50,7 @@ class NodeTransSession extends EventEmitter {
     if (this.conf.hls) {
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
       let hlsFileName = 'index.m3u8';
-      let mapHls = `[${this.conf.hlsFlags}:hls_segment_filename=\'${ouPath}/misskeylive_${random}_%d.ts\']${ouPath}/${hlsFileName}|`;
+      let mapHls = `[${this.conf.hlsFlags}:hls_segment_filename=\'${ouPath}/misskeylive_archive_%d.ts\']${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
     }
@@ -80,6 +86,10 @@ class NodeTransSession extends EventEmitter {
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       this.emit('end');
+      const rec = this.conf.rec;
+      const date = new Date();
+      const key = `live/archives/${date.getFullYear()}_${(`0${date.getMonth() + 1}`).slice(-2)}/${random}/`;
+      const user = this.conf.streamName;
       fs.readdir(ouPath, function (err, files) {
         if (!err) {
           files.forEach((filename) => {
@@ -88,7 +98,23 @@ class NodeTransSession extends EventEmitter {
               || filename.endsWith('.mpd')
               || filename.endsWith('.m4s')
               || filename.endsWith('.tmp')) {
-              fs.unlinkSync(ouPath + '/' + filename);
+              const path = ouPath + '/' + filename;
+              if (!rec) return fs.unlinkSync(path);
+              s3.upload({
+                Bucket: config.s3.bucket,
+                Key: key + filename,
+                Body: fs.createReadStream(path)
+              }, err1 => {
+                if (err1) console.error(err1);
+                fs.unlinkSync(path);
+                if (filename !== 'index.m3u8') return;
+                axios.get(
+                  `${config.endpoint}archive.php?authorization=${
+                    config.APIKey
+                  }&user=${
+                    user
+                  }&stream=${encodeURIComponent(`https://s3.arkjp.net/${key}index.m3u8`)}`);
+              });
             }
           })
         }

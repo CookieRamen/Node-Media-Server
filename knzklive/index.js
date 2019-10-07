@@ -47,6 +47,14 @@ if (conf.ffmpeg_path) {
       vc: 'copy',
       hls: true,
       hlsFlags: 'hls_time=1:hls_list_size=3:hls_flags=delete_segments'
+    },
+    {
+      app: 'live',
+      ac: 'copy',
+      vc: 'copy',
+      hls: true,
+      rec: true,
+      hlsFlags: 'hls_time=1'
     }
   ];
 
