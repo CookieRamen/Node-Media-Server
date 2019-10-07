@@ -29,7 +29,6 @@ class NodeTransSession extends EventEmitter {
     let ouPath = `${this.conf.mediaroot}/${this.conf.streamApp}/${this.conf.streamName}`;
     let mapStr = '';
     const random = Math.random().toString(32).substring(2);
-    this.random = random;
 
     if (this.conf.rtmp && this.conf.rtmpApp) {
       if (this.conf.rtmpApp === this.conf.streamApp) {
@@ -49,7 +48,6 @@ class NodeTransSession extends EventEmitter {
     }
     if (this.conf.hls) {
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
-      ouPath += this.conf.rec ? `/${random}` : '';
       let hlsFileName = 'index.m3u8';
       let mapHls = `[${this.conf.hlsFlags}:hls_segment_filename=\'${ouPath}/misskeylive_archive_%d.ts\']${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
@@ -89,7 +87,7 @@ class NodeTransSession extends EventEmitter {
       this.emit('end');
       const rec = this.conf.rec;
       const date = new Date();
-      const key = `live/archives/${date.getFullYear()}_${('0' + date.getMonth()).slice(-1)}/${this.random}/`;
+      const key = `live/archives/${date.getFullYear()}_${(`0${date.getMonth() + 1}`).slice(-2)}/${random}/`;
       fs.readdir(ouPath, function (err, files) {
         if (!err) {
           files.forEach((filename) => {
