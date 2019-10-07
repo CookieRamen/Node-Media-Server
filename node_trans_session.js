@@ -10,6 +10,11 @@ const { spawn } = require('child_process');
 const dateFormat = require('dateformat');
 const mkdirp = require('mkdirp');
 const fs = require('fs');
+const config = require('./knzklive/config');
+const aws = require('aws-sdk');
+aws.config.accessKeyId = config.s3.accessKey;
+aws.config.secretAccessKey = config.s3.secret;
+const s3 = new aws.S3({endpoint: config.s3.endpoint});
 
 class NodeTransSession extends EventEmitter {
   constructor(conf) {
@@ -24,6 +29,7 @@ class NodeTransSession extends EventEmitter {
     let ouPath = `${this.conf.mediaroot}/${this.conf.streamApp}/${this.conf.streamName}`;
     let mapStr = '';
     const random = Math.random().toString(32).substring(2);
+    this.random = random;
 
     if (this.conf.rtmp && this.conf.rtmpApp) {
       if (this.conf.rtmpApp === this.conf.streamApp) {
@@ -81,7 +87,9 @@ class NodeTransSession extends EventEmitter {
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       this.emit('end');
-      if (this.conf.rec) return;
+      const rec = this.conf.rec;
+      const date = new Date();
+      const key = `live/archives/${date.getFullYear()}_${('0' + date.getMonth()).slice(-1)}/${this.random}/`;
       fs.readdir(ouPath, function (err, files) {
         if (!err) {
           files.forEach((filename) => {
@@ -90,7 +98,16 @@ class NodeTransSession extends EventEmitter {
               || filename.endsWith('.mpd')
               || filename.endsWith('.m4s')
               || filename.endsWith('.tmp')) {
-              fs.unlinkSync(ouPath + '/' + filename);
+              const path = ouPath + '/' + filename;
+              if (!rec) return fs.unlinkSync(path);
+              s3.upload({
+                Bucket: config.s3.bucket,
+                Key: key + filename,
+                Body: fs.createReadStream(path)
+              }, err1 => {
+                if (err1) console.error(err1);
+                fs.unlinkSync(path);
+              });
             }
           })
         }

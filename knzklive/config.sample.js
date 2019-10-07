@@ -8,4 +8,10 @@ module.exports = {
   https_key: '/path/to/key.pem',
   ffmpeg_path: '/path/to/ffmpeg',
   */
+  s3: {
+    accessKey: '',
+    secret: '',
+    bucket: '',
+    endpoint: ''
+  }
 };
