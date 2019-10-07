@@ -114,8 +114,8 @@ class NodeTransSession extends EventEmitter {
                 axios.get(
                   `${config.endpoint}archive.php?authorization=${
                     config.APIKey
-                  }&user=${
-                    user
+                  }&user=${user}&id=${
+                    random
                   }&stream=${encodeURIComponent(`https://s3.arkjp.net/${key}index.m3u8`)}`);
               });
             }
