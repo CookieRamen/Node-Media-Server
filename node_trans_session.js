@@ -68,6 +68,9 @@ class NodeTransSession extends EventEmitter {
     Array.prototype.push.apply(argv, this.conf.vcParam);
     Array.prototype.push.apply(argv, ['-c:a', ac]);
     Array.prototype.push.apply(argv, this.conf.acParam);
+    if (this.conf.rec) {
+      Array.prototype.push.apply(argv, ['-t', '14400']);
+    }
     Array.prototype.push.apply(argv, ['-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr]);
     argv = argv.filter((n) => { return n }); //去空
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
@@ -111,8 +114,8 @@ class NodeTransSession extends EventEmitter {
                 axios.get(
                   `${config.endpoint}archive.php?authorization=${
                     config.APIKey
-                  }&user=${
-                    user
+                  }&user=${user}&id=${
+                    random
                   }&stream=${encodeURIComponent(`https://s3.arkjp.net/${key}index.m3u8`)}`);
               });
             }
