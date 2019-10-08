@@ -31,6 +31,7 @@ class NodeTransSession extends EventEmitter {
     let mapStr = '';
     const random = Math.random().toString(32).substring(2);
     const start = new Date();
+    ouPath += this.conf.rec ? `/${random}` : '';
 
     if (this.conf.rtmp && this.conf.rtmpApp) {
       if (this.conf.rtmpApp === this.conf.streamApp) {
