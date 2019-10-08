@@ -118,11 +118,23 @@ class NodeTransSession extends EventEmitter {
 
       if (!rec) return;
 
+      axios.get(`https://live-api.arkjp.net/public/thumbnails/${this.conf.streamName}.jpg?v=${(new Date().getTime() - 15000) / 60000}`, {
+        responseType: 'arraybuffer'
+      }).then(value => {
+          s3.upload({
+            Bucket: config.s3.bucket,
+            Key: key + 'thumbnail.jpg',
+            Body: value.data
+          }, err1 => {
+            if (err1) console.error(err1);
+          });
+        });
+
       axios.get(
         `${config.endpoint}archive.php?authorization=${
           config.APIKey
-        }&user=${this.conf.streamName}&duration=${((date - start) / 1000).toFixed()}&id=${
-          random
+        }&user=${this.conf.streamName}&duration=${((date - start) / 1000).toFixed()}&id=${random}&thumbnail=${
+          encodeURIComponent(`https://s3.arkjp.net/${key}thumbnail.jpg`)
         }&stream=${encodeURIComponent(`https://s3.arkjp.net/${key}index.m3u8`)}`);
     });
   }
