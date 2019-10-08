@@ -54,7 +54,7 @@ if (conf.ffmpeg_path) {
       vc: 'copy',
       hls: true,
       rec: true,
-      hlsFlags: 'hls_time=1'
+      hlsFlags: 'hls_list_size=0'
     }
   ];
 
