@@ -92,7 +92,6 @@ class NodeTransSession extends EventEmitter {
       const rec = this.conf.rec;
       const date = new Date();
       const key = `live/archives/${date.getFullYear()}_${(`0${date.getMonth() + 1}`).slice(-2)}/${random}/`;
-      const user = this.conf.streamName;
       fs.readdir(ouPath, function (err, files) {
         if (!err) {
           files.forEach((filename) => {
@@ -110,18 +109,20 @@ class NodeTransSession extends EventEmitter {
               }, err1 => {
                 if (err1) console.error(err1);
                 fs.unlinkSync(path);
-                if (filename !== 'index.m3u8') return;
-                axios.get(
-                  `${config.endpoint}archive.php?authorization=${
-                    config.APIKey
-                  }&user=${user}&id=${
-                    random
-                  }&stream=${encodeURIComponent(`https://s3.arkjp.net/${key}index.m3u8`)}`);
               });
             }
           })
         }
       });
+
+      if (!rec) return;
+
+      axios.get(
+        `${config.endpoint}archive.php?authorization=${
+          config.APIKey
+        }&user=${this.conf.streamName}&id=${
+          random
+        }&stream=${encodeURIComponent(`https://s3.arkjp.net/${key}index.m3u8`)}`);
     });
   }
 
