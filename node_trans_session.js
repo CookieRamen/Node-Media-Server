@@ -10,12 +10,6 @@ const { spawn } = require('child_process');
 const dateFormat = require('dateformat');
 const mkdirp = require('mkdirp');
 const fs = require('fs');
-const config = require('./knzklive/config');
-const aws = require('aws-sdk');
-aws.config.accessKeyId = config.s3.accessKey;
-aws.config.secretAccessKey = config.s3.secret;
-const s3 = new aws.S3({endpoint: config.s3.endpoint});
-const axios = require('axios');
 
 class NodeTransSession extends EventEmitter {
   constructor(conf) {
@@ -91,9 +85,16 @@ class NodeTransSession extends EventEmitter {
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       this.emit('end');
-      const rec = this.conf.rec;
       const date = new Date();
       const key = `live/archives/${date.getFullYear()}_${(`0${date.getMonth() + 1}`).slice(-2)}/${random}/`;
+
+      if (this.conf.rec) {
+        const archive = spawn('node', ['archive.js', random, this.conf.streamName, key, ((date - start) / 1000).toFixed(), ouPath]);
+        archive.stderr.pipe(process.stderr);
+        archive.stdout.pipe(process.stdout);
+        return;
+      }
+
       fs.readdir(ouPath, function (err, files) {
         if (!err) {
           files.forEach((filename) => {
@@ -102,41 +103,11 @@ class NodeTransSession extends EventEmitter {
               || filename.endsWith('.mpd')
               || filename.endsWith('.m4s')
               || filename.endsWith('.tmp')) {
-              const path = ouPath + '/' + filename;
-              if (!rec) return fs.unlinkSync(path);
-              s3.upload({
-                Bucket: config.s3.bucket,
-                Key: key + filename,
-                Body: fs.createReadStream(path)
-              }, err1 => {
-                if (err1) console.error(err1);
-                fs.unlinkSync(path);
-              });
+              fs.unlinkSync(ouPath + '/' + filename);
             }
           })
         }
       });
-
-      if (!rec) return;
-
-      axios.get(`https://live-api.arkjp.net/public/thumbnails/${this.conf.streamName}.jpg?v=${(new Date().getTime() - 15000) / 60000}`, {
-        responseType: 'arraybuffer'
-      }).then(value => {
-          s3.upload({
-            Bucket: config.s3.bucket,
-            Key: key + 'thumbnail.jpg',
-            Body: value.data
-          }, err1 => {
-            if (err1) console.error(err1);
-          });
-        });
-
-      axios.get(
-        `${config.endpoint}archive.php?authorization=${
-          config.APIKey
-        }&user=${this.conf.streamName}&duration=${((date - start) / 1000).toFixed()}&id=${random}&thumbnail=${
-          encodeURIComponent(`https://s3.arkjp.net/${key}thumbnail.jpg`)
-        }&stream=${encodeURIComponent(`https://s3.arkjp.net/${key}index.m3u8`)}`);
     });
   }
 
