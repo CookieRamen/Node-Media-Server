@@ -30,6 +30,7 @@ class NodeTransSession extends EventEmitter {
     let ouPath = `${this.conf.mediaroot}/${this.conf.streamApp}/${this.conf.streamName}`;
     let mapStr = '';
     const random = Math.random().toString(32).substring(2);
+    const start = new Date();
 
     if (this.conf.rtmp && this.conf.rtmpApp) {
       if (this.conf.rtmpApp === this.conf.streamApp) {
@@ -120,7 +121,7 @@ class NodeTransSession extends EventEmitter {
       axios.get(
         `${config.endpoint}archive.php?authorization=${
           config.APIKey
-        }&user=${this.conf.streamName}&id=${
+        }&user=${this.conf.streamName}&duration=${((date - start) / 1000).toFixed()}&id=${
           random
         }&stream=${encodeURIComponent(`https://s3.arkjp.net/${key}index.m3u8`)}`);
     });
