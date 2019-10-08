@@ -66,22 +66,3 @@ if (conf.ffmpeg_path) {
 
 const nms = new NodeMediaServer(config);
 nms.run();
-
-nms.on('donePublish', (id, StreamPath, args) => {
-  axios
-    .get(
-      `${config.knzklive.api_endpoint}publish.php?token=${
-        args.token
-      }&live=${StreamPath}&authorization=${
-        config.knzklive.api_key
-      }&mode=done_publish`
-    )
-    .then(response => {
-      // eslint-disable-next-line no-console
-      console.log('[donePublish]', response);
-    })
-    .catch(error => {
-      // eslint-disable-next-line no-console
-      console.log('[donePublish]', error);
-    });
-});
