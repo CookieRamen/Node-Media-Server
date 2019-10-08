@@ -14,7 +14,7 @@ const ouPath = process.argv[6];
 
 (async () => {
   try {
-    const thumb = await axios.get(`https://live-api.arkjp.net/public/thumbnails/${streamName}.jpg?v=${(new Date().getTime() - 15000) / 60000}`,
+    const thumb = await axios.get(`https://live-api.arkjp.net/public/thumbnails/${streamName}.jpg?v=${Math.floor((new Date().getTime() - 15000) / 60000)}`,
       {responseType: 'arraybuffer'});
     s3.upload({
       Bucket: config.s3.bucket,
