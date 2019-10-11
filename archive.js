@@ -5,6 +5,7 @@ aws.config.secretAccessKey = config.s3.secret;
 const s3 = new aws.S3({endpoint: config.s3.endpoint});
 const fs = require('fs');
 const axios = require('axios');
+const Promise = require('bluebird').Promise;
 
 const random = process.argv[2];
 const streamName = process.argv[3];
@@ -26,6 +27,7 @@ const ouPath = process.argv[6];
   } catch (e) {
     console.error(e);
   }
+  const promises = [];
 
   for (const filename of fs.readdirSync(ouPath)) {
     if (filename.endsWith('.ts')
@@ -34,22 +36,22 @@ const ouPath = process.argv[6];
       || filename.endsWith('.m4s')
       || filename.endsWith('.tmp')) {
       const path = ouPath + '/' + filename;
-      try {
-        await s3.upload({
-          Bucket: config.s3.bucket,
-          Key: key + filename,
-          Body: fs.createReadStream(path)
-        }).promise();
-      } catch (e) {
-        console.error(e);
-      }
+      promises.push({
+        Bucket: config.s3.bucket,
+        Key: key + filename,
+        Body: fs.createReadStream(path)
+      });
     }
   }
 
-  await axios.get(
-    `${config.endpoint}archive.php?authorization=${
-      config.APIKey
-    }&user=${streamName}&duration=${duration}&id=${random}&thumbnail=${
-      encodeURIComponent(`https://s3.arkjp.net/${key}thumbnail.jpg`)
-    }&stream=${encodeURIComponent(`https://s3.arkjp.net/${key}index.m3u8`)}`);
+  Promise.map(promises, data => s3.upload(data).promise().finally(() => fs.unlinkSync(data.Body.path)), {concurrency: config.s3.concurrency})
+    .finally(() => {
+      setTimeout(() => fs.rmdirSync(ouPath), 1000);
+      axios.get(
+        `${config.endpoint}archive.php?authorization=${
+          config.APIKey
+        }&user=${streamName}&duration=${duration}&id=${random}&thumbnail=${
+          encodeURIComponent(`https://s3.arkjp.net/${key}thumbnail.jpg`)
+        }&stream=${encodeURIComponent(`https://s3.arkjp.net/${key}index.m3u8`)}`);
+    });
 })();
