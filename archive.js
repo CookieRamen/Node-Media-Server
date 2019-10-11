@@ -44,7 +44,7 @@ const ouPath = process.argv[6];
     }
   }
 
-  Promise.map(promises, data => s3.upload(data).promise().finally(() => fs.unlinkSync(data.Body.path)), {concurrency: 4})
+  Promise.map(promises, data => s3.upload(data).promise().finally(() => fs.unlinkSync(data.Body.path)), {concurrency: config.s3.concurrency})
     .finally(() => {
       setTimeout(() => fs.rmdirSync(ouPath), 1000);
       axios.get(

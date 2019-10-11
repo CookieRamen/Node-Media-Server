@@ -12,6 +12,7 @@ module.exports = {
     accessKey: '',
     secret: '',
     bucket: '',
-    endpoint: ''
+    endpoint: '',
+    concurrency: 4
   }
 };
