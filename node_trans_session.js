@@ -26,6 +26,7 @@ class NodeTransSession extends EventEmitter {
     const random = Math.random().toString(32).substring(2);
     const start = new Date();
     ouPath += this.conf.rec ? `/${random}` : '';
+    const user = this.conf.streamName;
 
     if (this.conf.rtmp && this.conf.rtmpApp) {
       if (this.conf.rtmpApp === this.conf.streamApp) {
@@ -89,7 +90,7 @@ class NodeTransSession extends EventEmitter {
       const key = `live/archives/${date.getFullYear()}_${(`0${date.getMonth() + 1}`).slice(-2)}/${random}/`;
 
       if (this.conf.rec) {
-        const archive = spawn('node', ['archive.js', random, this.conf.streamName, key, ((date - start) / 1000).toFixed(), ouPath]);
+        const archive = spawn('node', ['archive.js', random, user, key, ((date - start) / 1000).toFixed(), ouPath]);
         archive.stderr.pipe(process.stderr);
         archive.stdout.pipe(process.stdout);
         return;
