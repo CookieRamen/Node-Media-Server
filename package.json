@@ -25,6 +25,7 @@
     "aws-sdk": "^2.543.0",
     "axios": "^0.18.0",
     "basic-auth-connect": "^1.0.0",
+    "bluebird": "^3.7.0",
     "body-parser": "^1.18.3",
     "chalk": "^2.4.2",
     "dateformat": "^3.0.3",
