@@ -27,23 +27,24 @@ const ouPath = process.argv[6];
     console.error(e);
   }
 
-  fs.readdirSync(ouPath).forEach((filename) => {
+  for (const filename of fs.readdirSync(ouPath)) {
     if (filename.endsWith('.ts')
       || filename.endsWith('.m3u8')
       || filename.endsWith('.mpd')
       || filename.endsWith('.m4s')
       || filename.endsWith('.tmp')) {
       const path = ouPath + '/' + filename;
-      s3.upload({
-        Bucket: config.s3.bucket,
-        Key: key + filename,
-        Body: fs.createReadStream(path)
-      }, err => {
-        if (err) console.error(err);
-        fs.unlinkSync(path);
-      });
+      try {
+        await s3.upload({
+          Bucket: config.s3.bucket,
+          Key: key + filename,
+          Body: fs.createReadStream(path)
+        }).promise();
+      } catch (e) {
+        console.error(e);
+      }
     }
-  });
+  }
 
   await axios.get(
     `${config.endpoint}archive.php?authorization=${
