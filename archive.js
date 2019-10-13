@@ -13,20 +13,31 @@ const key = process.argv[4];
 const duration = process.argv[5];
 const ouPath = process.argv[6];
 
-(async () => {
+const upload = async data => {
+  try {
+    await s3.upload(data).promise();
+  } catch (e) {
+    console.error(e);
+    console.error('Retry: ' + data.Key);
+    await upload(data);
+  }
+};
+
+const uploadThumb = async () => {
   try {
     const thumb = await axios.get(`https://live-api.arkjp.net/public/thumbnails/${streamName}.jpg?v=${Math.floor((new Date().getTime() - 15000) / 60000)}`,
       {responseType: 'arraybuffer'});
-    s3.upload({
+    await upload({
       Bucket: config.s3.bucket,
       Key: key + 'thumbnail.jpg',
       Body: thumb.data
-    }, err => {
-      if (err) console.error(err);
     });
   } catch (e) {
     console.error(e);
   }
+};
+
+const uploadVideos = async retry => {
   const promises = [];
 
   for (const filename of fs.readdirSync(ouPath)) {
@@ -44,14 +55,28 @@ const ouPath = process.argv[6];
     }
   }
 
-  Promise.map(promises, data => s3.upload(data).promise().finally(() => fs.unlinkSync(data.Body.path)), {concurrency: config.s3.concurrency})
-    .finally(() => {
-      setTimeout(() => fs.rmdirSync(ouPath), 10000);
-      axios.get(
-        `${config.endpoint}archive.php?authorization=${
-          config.APIKey
-        }&user=${streamName}&duration=${duration}&id=${random}&thumbnail=${
-          encodeURIComponent(`https://${config.s3.publishUrl}/${key}thumbnail.jpg`)
-        }&stream=${encodeURIComponent(`https://${config.s3.publishUrl}/${key}index.m3u8`)}`);
-    });
+  try {
+    await Promise.map(promises, data => s3.upload(data).promise().then(() => fs.unlinkSync(data.Body.path)), {concurrency: config.s3.concurrency});
+  } catch (e) {
+    console.error(e);
+    await uploadVideos(true);
+  }
+
+  if (fs.readdirSync(ouPath).length !== 0) {
+    await uploadVideos(true);
+  }
+
+  if (retry) return;
+  setTimeout(() => fs.rmdirSync(ouPath), 10000);
+  axios.get(
+    `${config.endpoint}archive.php?authorization=${
+      config.APIKey
+    }&user=${streamName}&duration=${duration}&id=${random}&thumbnail=${
+      encodeURIComponent(`https://${config.s3.publishUrl}/${key}thumbnail.jpg`)
+    }&stream=${encodeURIComponent(`https://${config.s3.publishUrl}/${key}index.m3u8`)}`);
+};
+
+(async () => {
+  await uploadThumb();
+  await uploadVideos(false);
 })();
