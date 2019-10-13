@@ -62,10 +62,6 @@ const uploadVideos = async retry => {
     await uploadVideos(true);
   }
 
-  if (fs.readdirSync(ouPath).length !== 0) {
-    await uploadVideos(true);
-  }
-
   if (retry) return;
   setTimeout(() => fs.rmdirSync(ouPath), 10000);
   axios.get(
