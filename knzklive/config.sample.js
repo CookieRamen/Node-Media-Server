@@ -13,6 +13,7 @@ module.exports = {
     secret: '',
     bucket: '',
     endpoint: '',
-    concurrency: 4
+    concurrency: 4,
+    publishUrl: ''
   }
 };

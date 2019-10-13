@@ -51,7 +51,7 @@ const ouPath = process.argv[6];
         `${config.endpoint}archive.php?authorization=${
           config.APIKey
         }&user=${streamName}&duration=${duration}&id=${random}&thumbnail=${
-          encodeURIComponent(`https://s3.arkjp.net/${key}thumbnail.jpg`)
-        }&stream=${encodeURIComponent(`https://s3.arkjp.net/${key}index.m3u8`)}`);
+          encodeURIComponent(`https://${config.s3.publishUrl}/${key}thumbnail.jpg`)
+        }&stream=${encodeURIComponent(`https://${config.s3.publishUrl}/${key}index.m3u8`)}`);
     });
 })();
