@@ -59,10 +59,7 @@ const uploadVideos = async retry => {
     await Promise.map(promises, data => s3.upload(data).promise().then(() => fs.unlinkSync(data.Body.path)), {concurrency: config.s3.concurrency});
   } catch (e) {
     console.error(e);
-    await uploadVideos(true);
-  }
-
-  if (fs.readdirSync(ouPath).length !== 0) {
+    await new Promise(resolve => setTimeout(resolve, 5000));
     await uploadVideos(true);
   }
 
