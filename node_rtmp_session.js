@@ -771,6 +771,7 @@ class NodeRtmpSession {
           this.videoWidth = dataMessage.dataObj.width;
           this.videoHeight = dataMessage.dataObj.height;
           this.videoFps = dataMessage.dataObj.framerate;
+          context.nodeEvent.emit('onMetaData', this.id, dataMessage.dataObj);
         }
 
         let opt = {

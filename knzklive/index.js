@@ -66,3 +66,11 @@ if (conf.ffmpeg_path) {
 
 const nms = new NodeMediaServer(config);
 nms.run();
+
+nms.on('onMetaData', (id, v) => {
+  const max = conf.max_bitRate || 30 * 1000;
+  if (v.videodatarate > max) {
+    console.warn('[bitrate limiter]', `${v.videodatarate}kbps`);
+    nms.getSession(id).reject();
+  }
+});
