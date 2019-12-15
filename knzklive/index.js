@@ -1,5 +1,5 @@
 const NodeMediaServer = require('../node_media_server');
-const axios = require('axios');
+const { error } = require('../node_core_logger');
 // eslint-disable-next-line import/no-unresolved
 const conf = require('./config');
 
@@ -70,7 +70,7 @@ nms.run();
 nms.on('onMetaData', (id, v) => {
   const max = conf.max_bitRate || 30 * 1000;
   if (v.videodatarate > max) {
-    console.warn('[bitrate limiter]', `${v.videodatarate}kbps`);
+    error('[bitrate limiter]', `${v.videodatarate}kbps`);
     nms.getSession(id).reject();
   }
 });
