@@ -15,5 +15,6 @@ module.exports = {
     endpoint: '',
     concurrency: 4,
     publishUrl: ''
-  }
+  },
+  max_bitRate: 30 * 1000 // 30mbps
 };
