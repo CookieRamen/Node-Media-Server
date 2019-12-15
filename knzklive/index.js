@@ -27,7 +27,10 @@ const config = {
   knzklive: {
     api_endpoint: conf.endpoint,
     api_key: conf.APIKey,
-    ignore_auth: !!IS_DEBUG
+    ignore_auth: !!IS_DEBUG,
+    max_bitRate: conf.max_bitRate || 30 * 1000,
+    bitRate_check_interval: conf.bitRate_check_interval || 3,
+    bitRate_check_count: conf.bitRate_check_count || 5
   }
 };
 
@@ -68,7 +71,7 @@ const nms = new NodeMediaServer(config);
 nms.run();
 
 nms.on('onMetaData', (id, v) => {
-  const max = conf.max_bitRate || 30 * 1000;
+  const max = config.knzklive.max_bitRate;
   if (v.videodatarate > max) {
     error('[bitrate limiter]', `${v.videodatarate / 1000}Mbps`);
     nms.getSession(id).reject();
