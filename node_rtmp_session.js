@@ -174,6 +174,10 @@ class NodeRtmpSession {
     this.players = new Set();
     this.numPlayCache = 0;
     context.sessions.set(this.id, this);
+
+    this.totalBytes = 0;
+    this.exceedbitRateCount = 0;
+    this.bitrateCheck = null;
   }
 
   run() {
@@ -201,6 +205,14 @@ class NodeRtmpSession {
         clearInterval(this.pingInterval);
         this.pingInterval = null;
       }
+
+      if (this.bitrateCheck != null) {
+        clearInterval(this.bitrateCheck);
+        this.bitrateCheck = null;
+      }
+
+      this.totalBytes = 0;
+      this.exceedbitRateCount = 0;
 
       Logger.log(`[rtmp disconnect] id=${this.id}`);
       context.nodeEvent.emit("doneConnect", this.id, this.connectCmdObj);
@@ -1044,6 +1056,23 @@ class NodeRtmpSession {
         }
       }
       context.nodeEvent.emit("postPublish", this.id, this.publishStreamPath, this.publishArgs);
+
+      this.bitrateCheck = setInterval(() => {
+        const bytes = this.socket.bytesRead - this.totalBytes;
+        this.totalBytes += bytes;
+        const bitRate = bytes / this.config.knzklive.bitRate_check_interval / 125; // Kbps
+
+        if (bitRate > this.config.knzklive.max_bitRate + 10000) {
+          this.exceedbitRateCount++;
+        } else {
+          this.exceedbitRateCount = 0;
+        }
+
+        if (this.exceedbitRateCount >= this.config.knzklive.bitRate_check_count) {
+          Logger.error('[bitrate limiter]', `${bitRate / 1000}Mbps`);
+          this.reject();
+        }
+      }, this.config.knzklive.bitRate_check_interval * 1000);
     }
     }.bind(this));
   }

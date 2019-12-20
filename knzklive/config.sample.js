@@ -16,5 +16,7 @@ module.exports = {
     concurrency: 4,
     publishUrl: ''
   },
-  max_bitRate: 30 * 1000 // 30mbps
+  max_bitRate: 30 * 1000, // 30mbps
+  bitRate_check_interval: 3, // sec
+  bitRate_check_count: 5
 };
