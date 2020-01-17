@@ -85,7 +85,7 @@ io.on('connection', socket => {
   socket.on('start', user => {
     if (!user || !user.stream_key) return;
     if (ffmpeg) return;
-    ffmpeg = child_process.spawn(conf.ffmpeg_path, ['-i', '-', '-f', 'lavfi', '-i', 'anullsrc', '-c:v', 'copy', '-c:a', 'aac', '-async', '1', '-f', 'flv', `rtmp://localhost/live/${user.stream_key}`]);
+    ffmpeg = child_process.spawn(conf.ffmpeg_path, ['-i', '-', '-f', 'lavfi', '-i', 'anullsrc', '-c:v', 'copy', '-c:a', 'aac', '-async', '1', '-f', 'flv', `rtmp://127.0.0.1/live/${user.stream_key}`]);
     ffmpeg.on('close', () => socket.emit('stop'));
   });
   socket.on('video', data => {
