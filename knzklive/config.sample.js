@@ -2,6 +2,7 @@ module.exports = {
   endpoint: 'https://live.knzk.me/api/pubsv/',
   APIKey: 'xxxxx',
   http_port: 8000,
+  ws_port: 3000,
   /*
   https_port: 8443,
   https_cert: '/path/to/cert.pem',
