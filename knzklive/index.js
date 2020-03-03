@@ -88,7 +88,7 @@ const server = require('http').createServer((req, res) => {
     res.end();
     return;
   }
-  res.writeHead(200, {'Content-Type': 'application/json'});
+  res.writeHead(200, {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'});
   res.end(JSON.stringify({count: [...viewers.values()].filter(value => value === id).length}));
 }).listen(conf.ws_port);
 
