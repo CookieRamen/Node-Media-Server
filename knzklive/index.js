@@ -80,6 +80,7 @@ nms.on('onMetaData', (id, v) => {
 
 const io = require('socket.io')(conf.ws_port);
 const child_process = require('child_process');
+const viewers = new Map();
 io.on('connection', socket => {
   let ffmpeg;
   socket.on('start', user => {
@@ -92,9 +93,21 @@ io.on('connection', socket => {
     if (!ffmpeg || !ffmpeg.stdin.writable) return;
     ffmpeg.stdin.write(data);
   });
+
+  socket.on('watching', id => {
+    if (!id) return;
+    viewers.set(socket.id, id);
+  });
+
+  socket.on('count', id => {
+    if (!id) return;
+    socket.emit('count', [...viewers.values()].filter(value => value === id).length)
+  });
+
   socket.on('disconnect', () => {
     if (ffmpeg) {
       ffmpeg.kill();
     }
+    viewers.delete(socket.id);
   });
 });
