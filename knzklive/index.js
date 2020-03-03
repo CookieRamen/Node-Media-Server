@@ -78,9 +78,22 @@ nms.on('onMetaData', (id, v) => {
   }
 });
 
-const io = require('socket.io')(conf.ws_port);
-const child_process = require('child_process');
 const viewers = new Map();
+const url = require('url');
+
+const server = require('http').createServer((req, res) => {
+  const id = url.parse(req.url, true).query.id;
+  if (!id) {
+    res.writeHead(400);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {'Content-Type': 'application/json'});
+  res.end(JSON.stringify({count: [...viewers.values()].filter(value => value === id).length}));
+}).listen(conf.ws_port);
+
+const io = require('socket.io')(server);
+const child_process = require('child_process');
 io.on('connection', socket => {
   let ffmpeg;
   socket.on('start', user => {
@@ -97,11 +110,6 @@ io.on('connection', socket => {
   socket.on('watching', id => {
     if (!id) return;
     viewers.set(socket.id, id);
-  });
-
-  socket.on('count', id => {
-    if (!id) return;
-    socket.emit('count', [...viewers.values()].filter(value => value === id).length)
   });
 
   socket.on('disconnect', () => {
