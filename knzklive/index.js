@@ -55,9 +55,8 @@ if (conf.ffmpeg_path) {
       app: 'live',
       ac: 'copy',
       vc: 'copy',
-      hls: true,
-      rec: true,
-      hlsFlags: 'hls_time=15:hls_list_size=0'
+      mp4: true,
+      rec: true
     }
   ];
 
