@@ -45,6 +45,7 @@ const uploadVideos = async retry => {
       || filename.endsWith('.m3u8')
       || filename.endsWith('.mpd')
       || filename.endsWith('.m4s')
+      || filename.endsWith('.mp4')
       || filename.endsWith('.tmp')) {
       const path = ouPath + '/' + filename;
       promises.push({
@@ -70,7 +71,7 @@ const uploadVideos = async retry => {
       config.APIKey
     }&user=${streamName}&duration=${duration}&id=${random}&thumbnail=${
       encodeURIComponent(`https://${config.s3.publishUrl}/${key}thumbnail.jpg`)
-    }&stream=${encodeURIComponent(`https://${config.s3.publishUrl}/${key}index.m3u8`)}`);
+    }&stream=${encodeURIComponent(`https://${config.s3.publishUrl}/${key}archive.mp4`)}`);
 };
 
 (async () => {
