@@ -1060,19 +1060,19 @@ class NodeRtmpSession {
         this.bitrateCheck = setInterval(() => {
           const bytes = this.socket.bytesRead - this.totalBytes;
           this.totalBytes += bytes;
-          const bitRate = bytes / this.config.knzklive.bitRate_check_interval / 125; // Kbps
+          const bitRate = bytes / this.config.rtmp.bitRate_check_interval / 125; // Kbps
 
-          if (bitRate > this.config.knzklive.max_bitRate + 10000) {
+          if (bitRate > this.config.rtmp.max_bitRate + 10000) {
             this.exceedbitRateCount++;
           } else {
             this.exceedbitRateCount = 0;
           }
 
-          if (this.exceedbitRateCount >= this.config.knzklive.bitRate_check_count) {
+          if (this.exceedbitRateCount >= this.config.rtmp.bitRate_check_count) {
             Logger.error('[bitrate limiter]', `${bitRate / 1000}Mbps`);
             this.reject();
           }
-        }, this.config.knzklive.bitRate_check_interval * 1000);
+        }, this.config.rtmp.bitRate_check_interval * 1000);
       }
     }).catch(() => {
       Logger.log(`[rtmp publish] Unauthorized. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId} sign=${this.publishArgs.sign} `);
