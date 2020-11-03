@@ -17,20 +17,15 @@ const config = {
     chunk_size: 100000,
     gop_cache: false,
     ping: 60,
-    ping_timeout: 30
+    ping_timeout: 30,
+    max_bitRate: conf.max_bitRate || 30 * 1000,
+    bitRate_check_interval: conf.bitRate_check_interval || 3,
+    bitRate_check_count: conf.bitRate_check_count || 5
   },
   http: {
     port: conf.http_port,
     allow_origin: '*',
     mediaroot: './media'
-  },
-  knzklive: {
-    api_endpoint: conf.endpoint,
-    api_key: conf.APIKey,
-    ignore_auth: !!IS_DEBUG,
-    max_bitRate: conf.max_bitRate || 30 * 1000,
-    bitRate_check_interval: conf.bitRate_check_interval || 3,
-    bitRate_check_count: conf.bitRate_check_count || 5
   }
 };
 
@@ -70,7 +65,7 @@ const nms = new NodeMediaServer(config);
 nms.run();
 
 nms.on('onMetaData', (id, v) => {
-  const max = config.knzklive.max_bitRate;
+  const max = config.rtmp.max_bitRate;
   if (v.videodatarate > max) {
     error('[bitrate limiter]', `${v.videodatarate / 1000}Mbps`);
     nms.getSession(id).reject();
