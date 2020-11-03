@@ -71,7 +71,7 @@ const uploadVideos = async retry => {
       config.APIKey
     }&user=${streamName}&duration=${duration}&id=${random}&thumbnail=${
       encodeURIComponent(`https://${config.s3.publishUrl}/${key}thumbnail.jpg`)
-    }&stream=${encodeURIComponent(`https://${config.s3.publishUrl}/${key}archive.mp4`)}`);
+    }&stream=${encodeURIComponent(`https://${config.s3.publishUrl}/${key}index.m3u8`)}`);
 };
 
 (async () => {
