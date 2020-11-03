@@ -67,7 +67,7 @@ const uploadVideos = async retry => {
   if (retry) return;
   setTimeout(() => fs.rmdirSync(ouPath), 10000);
   axios.get(
-    `${config.endpoint}archive.php?authorization=${
+    `${config.ArchiveUrl}archive.php?authorization=${
       config.APIKey
     }&user=${streamName}&duration=${duration}&id=${random}&thumbnail=${
       encodeURIComponent(`https://${config.s3.publishUrl}/${key}thumbnail.jpg`)
