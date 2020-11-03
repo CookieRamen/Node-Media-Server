@@ -1,8 +1,8 @@
 const NodeMediaServer = require('../node_media_server');
 const { error } = require('../node_core_logger');
-// eslint-disable-next-line import/no-unresolved
-const conf = require('./config');
+const knzk = require('../knzk');
 
+const conf = require('./config');
 const IS_DEBUG = process.env.NODE_ENV === 'development';
 
 const config = {
@@ -76,6 +76,9 @@ nms.on('onMetaData', (id, v) => {
     nms.getSession(id).reject();
   }
 });
+
+nms.on('donePublish', (id, StreamPath, args) => 
+  knzk.api(args.token, StreamPath, 'done_publish'));
 
 const viewers = new Map();
 const url = require('url');

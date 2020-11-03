@@ -1035,46 +1035,49 @@ class NodeRtmpSession {
       }
     }
 
-    knzk.auth(this, function () {
-    if (context.publishers.has(this.publishStreamPath)) {
-      Logger.log(`[rtmp publish] Already has a stream. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
-      this.sendStatusMessage(this.publishStreamId, "error", "NetStream.Publish.BadName", "Stream already publishing");
-    } else if (this.isPublishing) {
-      Logger.log(`[rtmp publish] NetConnection is publishing. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
-      this.sendStatusMessage(this.publishStreamId, "error", "NetStream.Publish.BadConnection", "Connection already publishing");
-    } else {
-      Logger.log(`[rtmp publish] New stream. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
-      context.publishers.set(this.publishStreamPath, this.id);
-      this.isPublishing = true;
-
-      this.sendStatusMessage(this.publishStreamId, "status", "NetStream.Publish.Start", `${this.publishStreamPath} is now published.`);
-      for (let idlePlayerId of context.idlePlayers) {
-        let idlePlayer = context.sessions.get(idlePlayerId);
-        if (idlePlayer.playStreamPath === this.publishStreamPath) {
-          idlePlayer.onStartPlay();
-          context.idlePlayers.delete(idlePlayerId);
+    knzk.api(this.publishArgs.token, this.publishStreamPath, 'pre_publish').then(() => {
+      if (context.publishers.has(this.publishStreamPath)) {
+        Logger.log(`[rtmp publish] Already has a stream. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
+        this.sendStatusMessage(this.publishStreamId, "error", "NetStream.Publish.BadName", "Stream already publishing");
+      } else if (this.isPublishing) {
+        Logger.log(`[rtmp publish] NetConnection is publishing. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
+        this.sendStatusMessage(this.publishStreamId, "error", "NetStream.Publish.BadConnection", "Connection already publishing");
+      } else {
+        Logger.log(`[rtmp publish] New stream. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
+        context.publishers.set(this.publishStreamPath, this.id);
+        this.isPublishing = true;
+  
+        this.sendStatusMessage(this.publishStreamId, "status", "NetStream.Publish.Start", `${this.publishStreamPath} is now published.`);
+        for (let idlePlayerId of context.idlePlayers) {
+          let idlePlayer = context.sessions.get(idlePlayerId);
+          if (idlePlayer.playStreamPath === this.publishStreamPath) {
+            idlePlayer.onStartPlay();
+            context.idlePlayers.delete(idlePlayerId);
+          }
         }
+        context.nodeEvent.emit("postPublish", this.id, this.publishStreamPath, this.publishArgs);
+
+        this.bitrateCheck = setInterval(() => {
+          const bytes = this.socket.bytesRead - this.totalBytes;
+          this.totalBytes += bytes;
+          const bitRate = bytes / this.config.knzklive.bitRate_check_interval / 125; // Kbps
+
+          if (bitRate > this.config.knzklive.max_bitRate + 10000) {
+            this.exceedbitRateCount++;
+          } else {
+            this.exceedbitRateCount = 0;
+          }
+
+          if (this.exceedbitRateCount >= this.config.knzklive.bitRate_check_count) {
+            Logger.error('[bitrate limiter]', `${bitRate / 1000}Mbps`);
+            this.reject();
+          }
+        }, this.config.knzklive.bitRate_check_interval * 1000);
       }
-      context.nodeEvent.emit("postPublish", this.id, this.publishStreamPath, this.publishArgs);
-
-      this.bitrateCheck = setInterval(() => {
-        const bytes = this.socket.bytesRead - this.totalBytes;
-        this.totalBytes += bytes;
-        const bitRate = bytes / this.config.knzklive.bitRate_check_interval / 125; // Kbps
-
-        if (bitRate > this.config.knzklive.max_bitRate + 10000) {
-          this.exceedbitRateCount++;
-        } else {
-          this.exceedbitRateCount = 0;
-        }
-
-        if (this.exceedbitRateCount >= this.config.knzklive.bitRate_check_count) {
-          Logger.error('[bitrate limiter]', `${bitRate / 1000}Mbps`);
-          this.reject();
-        }
-      }, this.config.knzklive.bitRate_check_interval * 1000);
-    }
-    }.bind(this));
+    }).catch(() => {
+      Logger.log(`[rtmp publish] Unauthorized. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId} sign=${this.publishArgs.sign} `);
+      this.sendStatusMessage(this.publishStreamId, "error", "NetStream.publish.Unauthorized", "Authorization required.");
+    });
   }
 
   onPlay(invokeMessage) {
