@@ -1,5 +1,4 @@
 module.exports = {
-  ArchiveUrl: 'https://example.com/api/pubsv/archive.php',
   APIUrl: 'https://live.knzk.me/api/pubsv/publish.php',
   APIKey: 'xxxxx',
   http_port: 8000,
