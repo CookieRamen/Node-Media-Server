@@ -10,13 +10,11 @@ module.exports = {
   https_key: '/path/to/key.pem',
   ffmpeg_path: '/path/to/ffmpeg',
   */
-  s3: {
-    accessKey: '',
-    secret: '',
-    bucket: '',
-    endpoint: '',
-    concurrency: 4,
-    publishUrl: ''
+  cloudflare: {
+    stream: {
+      account: '',
+      token: ''
+    }
   },
   max_bitRate: 30 * 1000, // 30mbps
   bitRate_check_interval: 3, // sec
