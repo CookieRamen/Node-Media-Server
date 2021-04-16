@@ -22,10 +22,8 @@
   },
   "homepage": "https://github.com/illuspas/Node-Media-Server#readme",
   "dependencies": {
-    "aws-sdk": "^2.888.0",
     "axios": "^0.21.1",
     "basic-auth-connect": "^1.0.0",
-    "bluebird": "^3.7.2",
     "body-parser": "^1.19.0",
     "chalk": "^2.4.2",
     "dateformat": "^3.0.3",
@@ -33,6 +31,7 @@
     "lodash": "^4.17.21",
     "mkdirp": "^0.5.5",
     "socket.io": "^2.4.1",
+    "tus-js-client": "^2.2.0",
     "ws": "^5.2.2"
   },
   "engines": {

@@ -1,11 +1,7 @@
 const config = require('./knzklive/config');
-const aws = require('aws-sdk');
-aws.config.accessKeyId = config.s3.accessKey;
-aws.config.secretAccessKey = config.s3.secret;
-const s3 = new aws.S3({endpoint: config.s3.endpoint});
+const tus = require('tus-js-client');
 const fs = require('fs');
 const axios = require('axios');
-const Promise = require('bluebird').Promise;
 
 const random = process.argv[2];
 const streamName = process.argv[3];
@@ -13,68 +9,33 @@ const key = process.argv[4];
 const duration = process.argv[5];
 const ouPath = process.argv[6];
 
-const upload = async data => {
-  try {
-    await s3.upload(data).promise();
-  } catch (e) {
-    console.error(e);
-    console.error('Retry: ' + data.Key);
-    await upload(data);
-  }
-};
-
-const uploadThumb = async () => {
-  try {
-    const thumb = await axios.get(`https://live-api.arkjp.net/public/thumbnails/${streamName}.jpg?v=${Math.floor((new Date().getTime() - 15000) / 60000)}`,
-      {responseType: 'arraybuffer'});
-    await upload({
-      Bucket: config.s3.bucket,
-      Key: key + 'thumbnail.jpg',
-      Body: thumb.data
-    });
-  } catch (e) {
-    console.error(e);
-  }
-};
-
-const uploadVideos = async retry => {
-  const promises = [];
-
-  for (const filename of fs.readdirSync(ouPath)) {
-    if (filename.endsWith('.ts')
-      || filename.endsWith('.m3u8')
-      || filename.endsWith('.mpd')
-      || filename.endsWith('.m4s')
-      || filename.endsWith('.mp4')
-      || filename.endsWith('.tmp')) {
-      const path = ouPath + '/' + filename;
-      promises.push({
-        Bucket: config.s3.bucket,
-        Key: key + filename,
-        Body: fs.createReadStream(path)
-      });
+try {
+  const archivePath = `${ouPath}/archive.ts`;
+  const stream = fs.createReadStream(archivePath);
+  const upload = new tus.Upload(stream, {
+    endpoint: `https://api.cloudflare.com/client/v4/accounts/${config.cloudflare.stream.account}/stream`,
+    headers: {
+      Authorization: `Bearer ${config.cloudflare.stream.token}`
+    },
+    chunkSize: 50 * 1024 * 1024,
+    uploadSize: fs.statSync(archivePath).size,
+    onAfterResponse: (req, res) => {
+      const mediaId = res.getHeader('stream-media-id');
+      console.log({mediaId});
     }
-  }
+  });
+  upload.start();
+} catch (e) {
+  console.error(e);
+  return;
+}
 
-  try {
-    await Promise.map(promises, data => s3.upload(data).promise().then(() => fs.unlinkSync(data.Body.path)), {concurrency: config.s3.concurrency});
-  } catch (e) {
-    console.error(e);
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    await uploadVideos(true);
-  }
-
-  if (retry) return;
-  setTimeout(() => fs.rmdirSync(ouPath), 10000);
-  axios.get(
-    `${config.ArchiveUrl}?authorization=${
-      config.APIKey
-    }&user=${streamName}&duration=${duration}&id=${random}&thumbnail=${
-      encodeURIComponent(`https://${config.s3.publishUrl}/${key}thumbnail.jpg`)
-    }&stream=${encodeURIComponent(`https://${config.s3.publishUrl}/${key}index.m3u8`)}`);
-};
-
-(async () => {
-  await uploadThumb();
-  await uploadVideos(false);
-})();
+/*
+setTimeout(() => fs.rmdirSync(ouPath), 10000);
+axios.get(
+  `${config.ArchiveUrl}?authorization=${
+    config.APIKey
+  }&user=${streamName}&duration=${duration}&id=${random}&thumbnail=${
+    encodeURIComponent(`https://${config.s3.publishUrl}/${key}thumbnail.jpg`)
+  }&stream=${encodeURIComponent(`https://${config.s3.publishUrl}/${key}index.m3u8`)}`);
+ */
